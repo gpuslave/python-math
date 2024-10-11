@@ -249,25 +249,33 @@ if __name__ == "__main__":
     solver = MatrixSolver(np.double)
     gen = SpecialMatrixGen()
 
-    # solver.scan_matrix("matrix.txt")
-    # by_one = solver.multiply_test()
-    #
-    # f = solver.solve()
-    # print(f)
-    #
-    # solver.set_f(by_one)
-    #
-    # f = solver.solve()
-    ## q = maxx
-    # maxx = solver.max_sub_ones()
-    # print(f)
-    # print(maxx)
+    solver.scan_matrix("matrix.txt")
+    by_one = solver.multiply_test()
+
+    f = solver.solve()
+    print(f)
+
+    solver.set_f(by_one)
+
+    f = solver.solve()
+    # q = maxx
+    maxx = solver.max_sub_ones()
+    print(f)
+    print(maxx)
 
     # mat = gen.gen_matrix(1, -10, 10)
 
+    result_2d= []
+
     for i in range(1, 4):
         for j in [10, 100, 1000]:
+            result = []
+            result.append(10**i)
+
             mat = gen.gen_matrix(i, -j, j)
+
+            result.append(mat[0].shape)
+            result.append((-j, j))
 
             solver.input_matrix(*mat)
             by_one = solver.multiply_test()
@@ -275,7 +283,8 @@ if __name__ == "__main__":
 
             solver.solve()
             maxx = solver.max_sub_ones()
-            print("maxx = ", maxx)
+            # print("maxx = ", maxx)
+            result.append(maxx)
 
             ## x = mat[1]
             random_f = solver.multiply_test_aboba(mat[1])
@@ -283,11 +292,12 @@ if __name__ == "__main__":
             x_star = solver.solve()
             # print([mat[1][i] - x_star[i] if x_star[i] <= maxx else (mat[1][i] - x_star[i])/maxx for i in range(mat[1].shape[0])])
             last_maxx = np.max([np.abs(mat[1][i] - x_star[i]) if np.abs(x_star[i]) <= maxx else np.abs(mat[1][i] - x_star[i])/maxx for i in range(mat[1].shape[0])])
-            print("last maxx: ", last_maxx) 
+            # print("last maxx: ", last_maxx) 
+            result.append(last_maxx)
+            result_2d.append(result)
 
-            break
-        break
-
+        #     break
+        # break
 
 
 
@@ -296,6 +306,8 @@ if __name__ == "__main__":
     # f = solver.solve()
 
     # print(f)
+    for i in result_2d:
+        print(i)
 
     print(f"--- {(time.time() - start_time)} seconds ---")
 
