@@ -391,6 +391,9 @@ if __name__ == "__main__":
     # solver.view_vectors()
     # f = solver.solve()
     # print(f)
+    q = 0.000000001
+
+    print(gen.gen_matrix(1, -10, 10)[0])
 
     result_2d = []
 
@@ -420,28 +423,43 @@ if __name__ == "__main__":
 
                 # ## x = mat[1]
                 solver.input_matrix_vec(*mat)
+                # solver.view_vectors()
                 f_gen = num_gen.uniform(-j, j, mat[1].shape)
+                # print("fgen", f_gen)
                 random_f = solver.matmul_vec(f_gen)
                 solver.set_f(random_f)
 
                 x_star = solver.solve()
+                # print("xstar", x_star)
 
-                last_maxx = np.max(
+                # last_maxx = np.max(
+                #     [
+                #         np.abs(f_gen[i] - x_star[i])
+                #         if np.abs(x_star[i]) <= maxx
+                #         else np.abs(f_gen[i] - x_star[i]) / maxx
+                #         for i in range(f_gen.shape[0])
+                #     ]
+                # )
+
+                last_maxx_q = np.max(
                     [
                         np.abs(f_gen[i] - x_star[i])
-                        if np.abs(x_star[i]) <= maxx
-                        else np.abs(f_gen[i] - x_star[i]) / maxx
+                        if np.abs(x_star[i]) <= q 
+                        else np.abs(f_gen[i] - x_star[i]) / x_star[i]
                         for i in range(f_gen.shape[0])
                     ]
                 )
-                margin_of_error_list[sample] = last_maxx
 
-                result.append(last_maxx)
+                margin_of_error_list[sample] = last_maxx_q
+
+                result.append(last_maxx_q)
                 print(result)
                 result_2d.append(result)
-
+                # break
+            # break
             print("accuracy mean: ", accuracy_list.mean())
             print("margin of error mean: ", margin_of_error_list.mean())
+        # break
                 # mat = gen.gen_matrix(i, -j, j)
                 #
                 # result.append(mat[0].shape)
