@@ -53,11 +53,12 @@ def lagrange_interpolation(X, Y, N, XX, m, eps):
         print(f"YY_prev: {prev_YY}")
 
         if eps_i < eps:
+            print(f"return m={i}")
             return YY
 
         # TODO: dunno how to fix atm
         if i >= 3 and eps_i > eps_i_prev:
-            print(i)
+            print(f"return m={i-1}")
             return prev_YY
 
         prev_YY = YY
@@ -66,39 +67,43 @@ def lagrange_interpolation(X, Y, N, XX, m, eps):
     return prev_YY
 
 
-def ff(x):
+def func_a(x):
+    """Function y = (1/10)x^3 + x^2 + (1/2)x"""
     return (1 / 10) * x**3 + x**2 + (1 / 2) * x
 
 
-def my_func(arr):
-    return np.asarray(list(map(ff, arr)), dtype=np.float64)
+def func_b(x):
+    """Function y = (1/2)x^4 + 2x^3 + (1/2)x^2 + (1/5)x"""
+    return (1 / 2) * x**4 + 2 * x**3 + (1 / 2) * x**2 + (1 / 5) * x
+
+
+def func_to_np(arr, func):
+    return np.asarray(list(map(func, arr)), dtype=np.float64)
 
 
 if __name__ == "__main__":
-    # x = np.linspace(np.e, np.e**4, 100)
-    # f_x = np.log(x)
+    # x_logsp = np.sort(
+    #     np.concatenate(
+    #         (
+    #             -np.logspace(np.log10(0.000001), np.log10(10.14), 70),
+    #             np.logspace(np.log10(0.000001), np.log10(10.14), 70),
+    #         )
+    #     )
+    # )
+    x = np.unique(func_to_np(np.linspace(-4, 1.5, 10), func_b))
 
-    f_x = np.sort(
-        np.concatenate(
-            (
-                -np.logspace(np.log10(0.000001), np.log10(10.14), 70),
-                np.logspace(np.log10(0.000001), np.log10(10.14), 70),
-            )
-        )
-    )
-    print(f_x)
+    # X = x_logsp
+    X = np.sort(x)
 
-    # print(my_func(f_x))
-
-    X = f_x
-    Y = my_func(f_x)
+    Y = func_to_np(X, func_a)
 
     N = len(X)
     m = 7
 
-    XX = -0.26
-    eps = 1e-10
+    XX = -12.5
+    eps = 1e-12
 
     YY = lagrange_interpolation(X, Y, N, XX, m, eps)
 
     print(f"Интерполяционное значение в точке {XX}: {YY}")
+    print(f"Значение: {func_a(XX)}, разность: {abs(YY-func_a(XX))}")
