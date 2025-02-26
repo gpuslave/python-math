@@ -82,53 +82,77 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
     x_current = x_start
     y_current = y0
     h = h_initial
+    h_min_flag = False
 
     x_values = [x_start]
     y_values = [y0]
 
-    while x_current < x_end:
-        if x_current + h > x_end:
-            h = x_end - x_current  # Чтобы точно достичь x_end
+    with open("output.txt", "a") as output_file:
+        output_file.truncate(0)
 
-        error_estimation = tolerance + 1  # Инициализация для входа в цикл while
+        print(
+            f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+        )
+        output_file.write(
+            f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+        )
 
-        while error_estimation > tolerance:
-            if h < h_min:
-                print(
-                    f"Предупреждение: Размер шага стал очень маленьким ({h}). Точность может быть не достигнута."
-                )
-                break  # Выход из внутреннего цикла, если шаг слишком мал
+        while x_current < x_end:
+            if x_current + h > x_end:
+                h = x_end - x_current  # Чтобы точно достичь x_end
 
-            # Вычисление решения с шагом h, используя 2-й порядок
-            y_rk2_step = runge_kutta_2nd_order(f, y_current, x_current, h)
+            error_estimation = tolerance + 1  # Инициализация для входа в цикл while
 
-            # Вычисление решения с шагом h, используя 4-й порядок (для оценки ошибки)
-            y_rk4_step = runge_kutta_3rd_order(f, y_current, x_current, h)
+            while error_estimation > tolerance and not h_min_flag:
+                if h < h_min:
+                    print(
+                        f"Предупреждение: Размер шага стал очень маленьким ({h}). Точность может быть не достигнута."
+                    )
+                    h_min_flag = True
+                    break  # Выход из внутреннего цикла, если шаг слишком мал
 
-            # Оценка ошибки как разница между 2-м и 4-м порядками
-            error_estimation = np.abs(y_rk2_step - y_rk4_step)
+                # Вычисление решения с шагом h, используя 2-й порядок
+                y_rk2_step = runge_kutta_2nd_order(f, y_current, x_current, h)
 
-            if error_estimation > tolerance:
-                h *= 0.5  # Уменьшение шага вдвое
-            else:
-                break  # Шаг приемлем
+                # Вычисление решения с шагом h, используя 4-й порядок (для оценки ошибки)
+                y_rk4_step = runge_kutta_3rd_order(f, y_current, x_current, h)
 
-        if error_estimation <= tolerance:
-            y_current = y_rk2_step  # Принимаем решение 2-го порядка
-            x_current += h
+                # Оценка ошибки как разница между 2-м и 4-м порядками
+                error_estimation = np.abs(y_rk2_step - y_rk4_step)
 
-            x_values.append(x_current)
-            y_values.append(y_current)
+                if error_estimation > tolerance:
+                    h *= 0.5  # Уменьшение шага вдвое
+                else:
+                    break  # Шаг приемлем
 
-            if h * 2 <= (x_end - x_current) and h * 2 <= h_initial * 2:
-                h *= 2.0  # Увеличение шага вдвое для следующего шага, если это возможно и не превышает начальный шаг удвоенный.
-
-        else:
-            if h <= h_min and x_current < x_end:
-                y_current = runge_kutta_2nd_order(f, y_current, x_current, h)
+            if error_estimation <= tolerance:
+                y_current = y_rk2_step  # Принимаем решение 2-го порядка
                 x_current += h
-                x_values.append(x_current)
-                y_values.append(y_current)
+
+                print(
+                    f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                )
+                output_file.write(
+                    f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                )
+                # x_values.append(x_current)
+                # y_values.append(y_current)
+
+                if h * 2 <= (x_end - x_current) and h * 2 <= h_initial * 2:
+                    h *= 2.0  # Увеличение шага вдвое для следующего шага, если это возможно и не превышает начальный шаг удвоенный.
+
+            else:
+                if h <= h_min and x_current < x_end:
+                    y_current = runge_kutta_2nd_order(f, y_current, x_current, h)
+                    x_current += h
+                    print(
+                        f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                    )
+                    output_file.write(
+                        f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                    )
+                    # x_values.append(x_current)
+                    # y_values.append(y_current)
 
     return x_values, y_values
 
@@ -139,11 +163,12 @@ def read_vars_from_file(filename):
 
     x_start = float(readline[0].strip())
     x_end = float(readline[1].strip())
-    y0 = float(readline[2].strip())
-    h_min = tolerance = float(readline[3].strip())
-    tolerance = float(readline[4].strip())
+    C = float(readline[2].strip())
+    y0 = float(readline[3].strip())
+    h_min = tolerance = float(readline[4].strip())
+    tolerance = float(readline[5].strip())
 
-    return x_start, x_end, y0, h_min, tolerance
+    return x_start, x_end, C, y0, h_min, tolerance
 
 
 if __name__ == "__main__":
@@ -158,7 +183,7 @@ if __name__ == "__main__":
     # x_end_example = 6
     # tolerance_example = 1e-5
 
-    x_start_example, x_end_example, y0_example, h_min, tolerance_example = (
+    x_start_example, x_end_example, C, y0_example, h_min, tolerance_example = (
         read_vars_from_file(input_filename)
     )
 
@@ -182,9 +207,10 @@ if __name__ == "__main__":
         tolerance_example,
     )
 
-    print("x\t\ty")
-    for x, y in zip(x_vals, y_vals):
-        print(f"{x:.3f}\t\t{y:.6f}")
+    # with open("output.txt", "w") as output_file:
+    #     print("x\t\ty")
+    #     for x, y in zip(x_vals, y_vals):
+    #         output_file.write(f"{x:.3f}\t\t{y:.6f}\n")
 
     import matplotlib.pyplot as plt
 
