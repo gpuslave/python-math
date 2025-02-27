@@ -63,7 +63,7 @@ def runge_kutta_4th_order(f, y_current, x_current, h):
     return y_next
 
 
-def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, tolerance):
+def solve_cauchy_adaptive_step(f, y0, C, x_start, x_end, h_initial, h_min, tolerance):
     """
     Решает задачу Коши с автоматическим выбором шага, используя методы Рунге-Кутта 2-го и 4-го порядков.
 
@@ -79,6 +79,7 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
     x_values : список значений x
     y_values : список соответствующих значений y
     """
+
     x_current = x_start
     y_current = y0
     h = h_initial
@@ -87,12 +88,9 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
     x_values = [x_start]
     y_values = [y0]
 
-    with open("output.txt", "a") as output_file:
+    with open("output.txt", "a", encoding="utf-8") as output_file:
         output_file.truncate(0)
 
-        print(
-            f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
-        )
         output_file.write(
             f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
         )
@@ -105,7 +103,7 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
 
             while error_estimation > tolerance and not h_min_flag:
                 if h < h_min:
-                    print(
+                    output_file.write(
                         f"Предупреждение: Размер шага стал очень маленьким ({h}). Точность может быть не достигнута."
                     )
                     h_min_flag = True
@@ -129,14 +127,9 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
                 y_current = y_rk2_step  # Принимаем решение 2-го порядка
                 x_current += h
 
-                print(
-                    f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
-                )
                 output_file.write(
-                    f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                    f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.8f}\t\test:{error_estimation:.8f}\t\tdiff:{(error_estimation - tolerance):.8f}\n"
                 )
-                # x_values.append(x_current)
-                # y_values.append(y_current)
 
                 if h * 2 <= (x_end - x_current) and h * 2 <= h_initial * 2:
                     h *= 2.0  # Увеличение шага вдвое для следующего шага, если это возможно и не превышает начальный шаг удвоенный.
@@ -145,14 +138,10 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
                 if h <= h_min and x_current < x_end:
                     y_current = runge_kutta_2nd_order(f, y_current, x_current, h)
                     x_current += h
-                    print(
-                        f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
-                    )
+
                     output_file.write(
-                        f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.5f}\n"
+                        f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.8f}\t\test:{error_estimation:.8f}\t\tdiff:{(error_estimation - tolerance):.8f}\n"
                     )
-                    # x_values.append(x_current)
-                    # y_values.append(y_current)
 
     return x_values, y_values
 
@@ -171,6 +160,65 @@ def read_vars_from_file(filename):
     return x_start, x_end, C, y0, h_min, tolerance
 
 
+def parse_output_file(filename="output.txt"):
+    """Parse the output file from Runge-Kutta solver"""
+    x_vals, y_vals, h_vals, err_vals = [], [], [], []
+
+    with open(filename, "r", encoding="utf-8") as file:
+        for line in file:
+            if line.startswith("x:"):
+                parts = line.strip().split("\t\t")
+                x_vals.append(float(parts[0].split(":")[1]))
+                y_vals.append(float(parts[1].split(":")[1]))
+                h_vals.append(float(parts[2].split(":")[1]))
+
+                # Extract error estimation if available
+                if len(parts) > 4 and "est:" in parts[4]:
+                    err_vals.append(float(parts[4].split(":")[1]))
+                else:
+                    err_vals.append(0)
+
+    return x_vals, y_vals, h_vals, err_vals
+
+
+def visualize_results():
+    """Plot the numerical solution and step size from output.txt"""
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import ScalarFormatter
+
+    # Parse data
+    x_vals, y_vals, h_vals, err_vals = parse_output_file()
+
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+    # Solution plot
+    ax1.plot(x_vals, y_vals, "b-", linewidth=2)
+    ax1.set_title("Numerical Solution y(x)")
+    ax1.set_ylabel("y")
+    ax1.grid(True)
+
+    # Step size plot (log scale for better visualization)
+    ax2.plot(x_vals, h_vals, "r-", linewidth=1.5)
+    ax2.set_ylim((min(h_vals) * 0.001, max(h_vals) * 0.3))
+    # y_ticks = np.linspace(min(h_vals) * 0.9, max(h_vals) * 1.1, 10)
+    # y_ticks = np.logspace(np.log10(min(h_vals) * 0.9), np.log10(max(h_vals) * 1.1), 10)
+    # ax2.set_yticks(y_ticks)
+
+    ax2.set_title("Adaptive Step Size")
+    ax2.set_xlabel("x")
+    ax2.set_ylabel("Step Size (h)")
+    ax2.grid(True)
+
+    formatter = ScalarFormatter(useOffset=False)
+    formatter.set_scientific(False)
+    ax2.yaxis.set_major_formatter(formatter)
+
+    plt.tight_layout()
+    plt.savefig("runge_kutta_solution.png", dpi=300)
+    plt.show()
+
+
 if __name__ == "__main__":
     input_filename = "input.txt"
 
@@ -178,28 +226,26 @@ if __name__ == "__main__":
     def f_example(x, y):
         return y - x**2 + 1
 
-    # y0_example = 0.5
-    # x_start_example = 0
-    # x_end_example = 6
-    # tolerance_example = 1e-5
-
     x_start_example, x_end_example, C, y0_example, h_min, tolerance_example = (
         read_vars_from_file(input_filename)
     )
 
     h_initial_example = (x_end_example - x_start_example) / 10.0
+
     print(
         x_start_example,
         x_end_example,
+        C,
         y0_example,
         h_min,
         tolerance_example,
         h_initial_example,
     )
 
-    x_vals, y_vals = solve_cauchy_adaptive_step(
+    solve_cauchy_adaptive_step(
         f_example,
         y0_example,
+        C,
         x_start_example,
         x_end_example,
         h_initial_example,
@@ -207,23 +253,4 @@ if __name__ == "__main__":
         tolerance_example,
     )
 
-    # with open("output.txt", "w") as output_file:
-    #     print("x\t\ty")
-    #     for x, y in zip(x_vals, y_vals):
-    #         output_file.write(f"{x:.3f}\t\t{y:.6f}\n")
-
-    import matplotlib.pyplot as plt
-
-    plt.plot(
-        x_vals, y_vals, marker="o", linestyle="-", label="Решение с адаптивным шагом"
-    )
-
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Решение задачи Коши методом Рунге-Кутта с адаптивным шагом")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-    print(
-        "[Image of Plot of solution of Cauchy problem using Runge-Kutta method with adaptive step]"
-    )
+    visualize_results()
