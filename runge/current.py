@@ -114,11 +114,11 @@ def solve_cauchy_adaptive_step(f, y0, x_start, x_end, h_initial, h_min, toleranc
                 # Вычисление решения с шагом h, используя 2-й порядок
                 y_rk2_step = runge_kutta_2nd_order(f, y_current, x_current, h)
 
-                # Вычисление решения с шагом h, используя 4-й порядок (для оценки ошибки)
-                y_rk4_step = runge_kutta_3rd_order(f, y_current, x_current, h)
+                # Вычисление решения с шагом h, используя 3-й порядок (для оценки ошибки)
+                y_rk3_step = runge_kutta_3rd_order(f, y_current, x_current, h)
 
                 # Оценка ошибки как разница между 2-м и 4-м порядками
-                error_estimation = np.abs(y_rk2_step - y_rk4_step)
+                error_estimation = np.abs(y_rk2_step - y_rk3_step)
 
                 if error_estimation > tolerance:
                     h *= 0.5  # Уменьшение шага вдвое
