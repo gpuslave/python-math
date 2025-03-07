@@ -65,7 +65,7 @@ def runge_kutta_4th_order(f, y_current, x_current, h):
 
 def solve_cauchy_adaptive_step(f, y0, C, x_start, x_end, h_initial, h_min, tolerance):
     """
-    Решает задачу Коши с автоматическим выбором шага, используя методы Рунге-Кутта 2-го и 4-го порядков.
+    Решает задачу Коши с автоматическим выбором шага, используя методы Рунге-Кутта 2-го и 3-го порядков.
 
     Аргументы:
     f : функция, представляющая dy/dx = f(x, y)
@@ -74,10 +74,6 @@ def solve_cauchy_adaptive_step(f, y0, C, x_start, x_end, h_initial, h_min, toler
     x_end : конечное значение x
     h_initial : начальный размер шага
     tolerance : желаемая точность
-
-    Возвращает:
-    x_values : список значений x
-    y_values : список соответствующих значений y
     """
 
     x_current = C
@@ -86,9 +82,6 @@ def solve_cauchy_adaptive_step(f, y0, C, x_start, x_end, h_initial, h_min, toler
     h_min_flag = False
 
     direction = 1 if C == x_start else -1
-
-    x_values = [x_current]
-    y_values = [y0]
 
     with open("output.txt", "a", encoding="utf-8") as output_file:
         output_file.truncate(0)
@@ -194,8 +187,6 @@ def solve_cauchy_adaptive_step(f, y0, C, x_start, x_end, h_initial, h_min, toler
         #             output_file.write(
         #                 f"x:{x_current:.5f}\t\ty:{y_current:.5f}\t\th:{h:.5f}\t\te:{tolerance:.8f}\t\test:{error_estimation:.8f}\t\tdiff:{(error_estimation - tolerance):.8f}\n"
         #             )
-
-    return x_values, y_values
 
 
 def read_vars_from_file(filename):
