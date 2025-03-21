@@ -1,19 +1,19 @@
 import numpy as np
 import math
 
-def parse_possible_ln_or_num(input):
-  if not input.startswith("ln"):
-    return float(input)
-  else:
-    return math.log(float(input[2:]))
-  
+def parse_possible_ln_or_num(value):
+  value = value.strip()  
+  if value.startswith("ln"):
+    return math.log(float(value[2:]))
+  return float(value)
+
 def read_vars(filename):
   with open(filename, mode='r') as file:
     readline = file.readlines()    
 
     ## constraint section
-    constraints = readline[0].split()
-    # print(alfa1, alfa2, gamma2)
+    constraints = list(map(parse_possible_ln_or_num, readline[0].split()))
+    # print(constraints)
 
     ## limit section
     limits = readline[1].split()
